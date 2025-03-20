@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  config1:
+    image: mongo:4.4
+    command: mongod --configsvr --replSet configReplSet --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27019:27019"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf  # Монтирование конфигурационного файла
+      - ./mongo-logs/config1:/var/log/mongodb  # Монтирование директории для логов
+    networks:
+      - mongoCluster
+
+  config2:
+    image: mongo:4.4
+    command: mongod --configsvr --replSet configReplSet --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27020:27019"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/config2:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  config3:
+    image: mongo:4.4
+    command: mongod --configsvr --replSet configReplSet --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27021:27019"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/config3:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard1a:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard1 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27018:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard1a:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard1b:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard1 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27028:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard1b:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard1c:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard1 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27038:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard1c:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard2a:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard2 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27048:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard2a:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard2b:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard2 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27058:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard2b:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard2c:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard2 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27068:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard2c:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard3a:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard3 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27078:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard3a:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard3b:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard3 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27088:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard3b:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  shard3c:
+    image: mongo:4.4
+    command: mongod --shardsvr --replSet shard3 --bind_ip_all --config /etc/mongod.conf
+    ports:
+      - "27098:27018"
+    volumes:
+      - ./mongo-config/mongod.conf:/etc/mongod.conf
+      - ./mongo-logs/shard3c:/var/log/mongodb
+    networks:
+      - mongoCluster
+
+  router:
+    image: mongo:4.4
+    command:
+      - mongos
+      - "--configdb"
+      - "configReplSet/config1:27019,config2:27019,config3:27019"
+      - "--bind_ip_all"
+      - "--logpath"
+      - "/var/log/mongodb/mongos.log" # Логи mongos будут записаны в файл
+      - "--logappend"  # Добавлять новые записи в конец файла
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-logs/router:/var/log/mongodb  # Монтирование директории для логов
+    depends_on:
+      - config1
+      - config2
+      - config3
+      - shard1a
+      - shard1b
+      - shard1c
+      - shard2a
+      - shard2b
+      - shard2c
+      - shard3a
+      - shard3b
+      - shard3c
+    networks:
+      - mongoCluster
+
+networks:
+  mongoCluster:
+    name: mongoCluster
+    driver: bridge
